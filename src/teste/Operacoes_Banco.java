@@ -5,6 +5,8 @@
  */
 package teste;
 
+import com.ibatis.sqlmap.client.SqlMapClient;
+import java.io.IOException;
 import util.FabricaConexao;
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -13,9 +15,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.text.ParseException;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import util.LeitorArquivos;
+
 
 /**
  *
@@ -27,104 +30,35 @@ public class Operacoes_Banco {
     float salarioComDescontoINSS;
     
 
-    LeitorArquivos leitorArquivos = new LeitorArquivos();
+    
 
-    FabricaConexao novaConexao = new FabricaConexao("PostgreSQL");
-//    FabricaConexao novaConexao = new FabricaConexao("PostgreSQL");
+    public void consultaFuncionarios() throws ClassNotFoundException, IOException, SQLException {
 
-    public void consultaFuncionarios() throws ClassNotFoundException {
+        //Não estou conseguindo pegar 
+        FabricaConexao novaConexao = new FabricaConexao("PostgreSQL");
+        SqlMapClient smc = novaConexao.getSmc();
+    
+        List <Funcionario> lista = (List<Funcionario>)
+        smc.queryForList("Funcionario.getAll", null);
+        Funcionario funcionarioLido = null;
+		
+      for (Funcionario funcionario : lista) {
+         System.out.print("  " + funcionario.getId());
+         System.out.print("  " + funcionario.getNome());
+         System.out.print("  " + funcionario.getCargo());
+         System.out.print("  " + funcionario.getNumeroDependentes());
+         System.out.print("  " + funcionario.getSalario());
+         funcionarioLido = funcionario; 
+         System.out.println(funcionarioLido.toString());
+      }    
+		
+      System.out.println("FUNCIONÁRIOS LIDOS COM SUCESSO !");
+   }
+    
 
-        Connection conn = novaConexao.criaConexao();
-        try {
-            //STEP 4: Execute a query
-            System.out.println("Creating statement...");
-            Statement stmt = conn.createStatement();
-            String sql;
-            sql = "SELECT * FROM funcionario";
-            ResultSet rs = stmt.executeQuery(sql);
+    public void buscarID(Integer idFuncionario)  {
 
-            //STEP 5: Extract data from result set
-            while (rs.next()) {
-                //Retrieve by column name
-                funcionario.setId(rs.getInt("id"));
-                funcionario.setNome(rs.getString("nome"));
-                funcionario.setCargo(rs.getString("cargo"));
-                funcionario.setNumeroDependentes(rs.getInt("numeroDependentes"));
-                funcionario.setSalario(rs.getFloat("salario"));
 
-                //Display values
-                System.out.println("ID DO FUNCIONARIO: " + funcionario.getId());
-                System.out.println(", NOME: " + funcionario.getNome());
-                System.out.println(", CARGO: " + funcionario.getCargo());
-                System.out.println(", SALÁRIO: R$ " + funcionario.getSalario());
-
-            }
-            //STEP 6: Clean-up environment
-            rs.close();
-            stmt.close();
-            this.novaConexao.fecharConexao(conn);
-        } catch (SQLException se) {
-            //Handle errors for JDBC
-            se.printStackTrace();
-        } catch (Exception e) {
-            //Handle errors for Class.forName
-            e.printStackTrace();
-        } finally {
-            //finally block used to close resources
-            if (conn != null) {
-                novaConexao.fecharConexao(conn);
-            } //end finally try
-        }//end try
-        System.out.println("Goodbye!");
-
-    }
-
-    public void buscarID(Integer idFuncionario) throws ClassNotFoundException {
-
-        Connection conn = novaConexao.criaConexao();
-        try {
-            //STEP 4: Execute a query
-            System.out.println("Creating statement...");
-
-            Statement stmt = conn.createStatement();
-            String sql;
-            sql = ("SELECT * FROM funcionario WHERE id = " + idFuncionario);
-            ResultSet rs = stmt.executeQuery(sql);
-
-            //STEP 5: Extract data from result set
-            while (rs.next()) {
-                //Retrieve by column name
-                funcionario.setId(rs.getInt("id"));
-                funcionario.setNome(rs.getString("nome"));
-                funcionario.setCargo(rs.getString("cargo"));
-                funcionario.setNumeroDependentes(rs.getInt("numeroDependentes"));
-                funcionario.setSalario(rs.getFloat("salario"));
-
-                //Display values
-                System.out.println("ID DO FUNCIONARIO: " + funcionario.getId());
-                System.out.println(", NOME: " + funcionario.getNome());
-                System.out.println(", CARGO: " + funcionario.getCargo());
-                System.out.println(", NÚMERO DE DEPENDENTES: " + funcionario.getNumeroDependentes());
-                System.out.println(", SALÁRIO: R$ " + funcionario.getSalario());
-
-            }
-            //STEP 6: Clean-up environment
-            rs.close();
-            stmt.close();
-            novaConexao.fecharConexao(conn);
-        } catch (SQLException se) {
-            //Handle errors for JDBC
-            se.printStackTrace();
-        } catch (Exception e) {
-            //Handle errors for Class.forName
-            e.printStackTrace();
-        } finally {
-            //finally block used to close resources
-            if (conn != null) {
-                novaConexao.fecharConexao(conn);
-            } //end finally try
-        }//end try
-        System.out.println("Goodbye!");
 
     }
 

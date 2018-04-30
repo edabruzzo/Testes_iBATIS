@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" 
+"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="Funcionario">
+
+   <!-- Perform Insert Operation -->
+   <insert id="insert" parameterClass="Funcionario">
+     INSERT INTO funcionario(nome, cargo, numeroDependentes, salario)
+      values (#nome#, #cargo#, #numeroDependentes#, #salario#)
+
+      <selectKey resultClass="int" keyProperty="id">
+         select last_insert_id() as id
+      </selectKey>
+   </insert>
+
+   <!-- Perform Read Operation -->
+   <select id="getAll" resultClass="Funci">
+      SELECT * FROM funcionario
+   </select>
+
+   <!-- Perform Update Operation -->
+   <update id="update" parameterClass="Funcionario">
+      UPDATE funcionario
+      SET    salario = #salario#
+      WHERE  id = #id#
+   </update>
+
+   <!-- Perform Delete Operation -->
+   <delete id="delete" parameterClass="int">
+      DELETE FROM funcionario
+      WHERE  id = #id#
+   </delete>
+
+   <!-- To call stored procedure. -->
+   <procedure id="calculaPrevidencia" resultClass="Double" parameterMap="calculaPrevidenciaInfoCall">
+      { call getFuncionario( #acctNOME# ) } 
+   </procedure>
+	
+   <parameterMap id="getEmpInfoCall" class="map">
+      <parameter property="acctID" jdbcType="INT" javaType="java.lang.Integer" mode="IN"/>
+   </parameterMap>
+
+</sqlMap>
