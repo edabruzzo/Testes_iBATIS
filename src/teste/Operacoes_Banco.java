@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 /**
  *
  * @author internet
@@ -28,300 +27,111 @@ public class Operacoes_Banco {
 
     private Funcionario funcionario = new Funcionario();
     float salarioComDescontoINSS;
-    
-
-    
+    String bancoUtilizado = "PostgreSQL";
 
     public void consultaFuncionarios() throws ClassNotFoundException, IOException, SQLException {
 
-        //Não estou conseguindo pegar 
-        FabricaConexao novaConexao = new FabricaConexao("PostgreSQL");
+        //Não estou conseguindo instanciar a conexão como campo da classe 
+        //por conta de tratamento da exceção IOException
+        FabricaConexao novaConexao = new FabricaConexao(bancoUtilizado);
         SqlMapClient smc = novaConexao.getSmc();
-    
-        List <Funcionario> lista = (List<Funcionario>)
-        smc.queryForList("Funcionario.getAll", null);
+
+        List<Funcionario> lista = (List<Funcionario>) smc.queryForList("Funcionario.getAll", null);
         Funcionario funcionarioLido = null;
-		
-      for (Funcionario funcionario : lista) {
-         System.out.print("  " + funcionario.getId());
-         System.out.print("  " + funcionario.getNome());
-         System.out.print("  " + funcionario.getCargo());
-         System.out.print("  " + funcionario.getNumeroDependentes());
-         System.out.print("  " + funcionario.getSalario());
-         funcionarioLido = funcionario; 
-         System.out.println(funcionarioLido.toString());
-      }    
-		
-      System.out.println("FUNCIONÁRIOS LIDOS COM SUCESSO !");
-   }
-    
 
-    public void buscarID(Integer idFuncionario)  {
+        System.out.println("LISTANDO FUNCIONÁRIOS !!!");
 
+        for (Funcionario funcionario : lista) {
+            System.out.print("  " + funcionario.getId());
+            System.out.print("  " + funcionario.getNome());
+            System.out.print("  " + funcionario.getCargo());
+            System.out.print("  " + funcionario.getNumeroDependentes());
+            System.out.print("  " + funcionario.getSalario());
+            funcionarioLido = funcionario;
+            System.out.println(funcionarioLido.toString());
+        }
 
+        System.out.println("FUNCIONÁRIOS LIDOS COM SUCESSO !");
+    }
+
+    public void buscarID(Integer idFuncionario) throws IOException {
+
+        FabricaConexao novaConexao = new FabricaConexao(bancoUtilizado);
+        SqlMapClient smc = novaConexao.getSmc();
 
     }
 
-    public void inserir(String nome, String cargo, int numeroDependentes, float salario) throws ClassNotFoundException, SQLException, ParseException {
+    public void inserir(String nome, String cargo, int numeroDependentes, float salario) throws ClassNotFoundException, SQLException, ParseException, IOException {
 
         funcionario = new Funcionario();
         funcionario.setNome(nome);
         funcionario.setCargo(cargo);
         funcionario.setNumeroDependentes(numeroDependentes);
         funcionario.setSalario(salario);
-        Connection conn = novaConexao.criaConexao();
 
-        try {
+        //Não estou conseguindo instanciar a conexão como campo da classe 
+        //por conta de tratamento da exceção IOException
+        FabricaConexao novaConexao = new FabricaConexao(bancoUtilizado);
+        SqlMapClient smc = novaConexao.getSmc();
 
-            conn.setAutoCommit(false);
-            Statement stmt = conn.createStatement();
-            String SQL = "INSERT INTO funcionario(nome, cargo, numeroDependentes, salario) "
-                    + "VALUES('" + funcionario.getNome() + "','"
-                    + funcionario.getCargo() + "',"
-                    + +funcionario.getNumeroDependentes() + ","
-                    + +funcionario.getSalario() + ");";
-            System.out.println(SQL);
-            stmt.executeUpdate(SQL);
-            conn.commit();
-            novaConexao.fecharConexao(conn);
-            System.out.println("FUNCIONARIO CADASTRADO COM SUCESSO!");
-            consultaFuncionarios();
-        } catch (SQLException se) {
+        smc.insert("Funcionario.insert", funcionario);
 
-            conn.rollback();
-            Logger.getLogger(Operacoes_Banco.class.getName()).log(Level.SEVERE, null, se);
-
-        }
-    }
-
-    public void listar() throws ClassNotFoundException {
-
-        System.out.println("LISTANDO FUNCIONÁRIOS !!!");
-        Connection conn = novaConexao.criaConexao();
-
-        try {
-            //STEP 4: Execute a query
-            System.out.println("Creating statement...");
-            Statement stmt = conn.createStatement();
-            String sql;
-            sql = ("SELECT * FROM funcionario;");
-
-            ResultSet rs = stmt.executeQuery(sql);
-
-            //STEP 5: Extract data from result set
-            while (rs.next()) {
-                //Retrieve by column name
-                funcionario.setId(rs.getInt("id"));
-                funcionario.setNome(rs.getString("nome"));
-                funcionario.setCargo(rs.getString("cargo"));
-                funcionario.setNumeroDependentes(rs.getInt("numeroDependentes"));
-                funcionario.setSalario(rs.getFloat("salario"));
-
-                //Display values
-                System.out.println("ID DO FUNCIONARIO: " + funcionario.getId());
-                System.out.println(", NOME: " + funcionario.getNome());
-                System.out.println(", CARGO: " + funcionario.getCargo());
-                System.out.println(", NÚMERO DE DEPENDENTES: " + funcionario.getNumeroDependentes());
-                System.out.println(", SALÁRIO: R$" + funcionario.getSalario());
-
-            }
-            //STEP 6: Clean-up environment
-            rs.close();
-            stmt.close();
-            novaConexao.fecharConexao(conn);
-        } catch (SQLException se) {
-            //Handle errors for JDBC
-            se.printStackTrace();
-        } catch (Exception e) {
-            //Handle errors for Class.forName
-            e.printStackTrace();
-        } finally {
-            //finally block used to close resources
-            if (conn != null) {
-                novaConexao.fecharConexao(conn);
-            } //end finally try
-        }//end try
-        System.out.println("Goodbye!");
-
+        System.out.println("Funcionario inserido com sucesso !");
     }
 
     public void atualizar(int id, float salario) throws ClassNotFoundException {
 
         System.out.println("ATUALIZANDO FUNCIONÁRIOS !!!");
-        Connection conn = novaConexao.criaConexao();
-
-        try {
-            //STEP 4: Execute a query
-            System.out.println("Creating statement...");
-            Statement stmt = conn.createStatement();
-            String sql = ("UPDATE funcionario "
-                    + "SET salario = " + salario + " WHERE id = " + id);
-
-            stmt.executeUpdate(sql);
-            System.out.println("VERIFICANDO FUNCIONARIO APÓS ATUALIZAÇÃO: ");
-            buscarID(id);
-
-            stmt.close();
-            novaConexao.fecharConexao(conn);
-        } catch (SQLException se) {
-            //Handle errors for JDBC
-            se.printStackTrace();
-
-        } catch (Exception e) {
-            //Handle errors for Class.forName
-            e.printStackTrace();
-        } finally {
-            //finally block used to close resources
-            if (conn != null) {
-                novaConexao.fecharConexao(conn);
-            } //end finally try
-        }//end try
-        System.out.println("Goodbye!");
 
     }
 
     public void remover(int idFuncionario) throws ClassNotFoundException {
 
         System.out.println("DELETANDO FUNCIONÁRIOS !!!");
-        Connection conn = novaConexao.criaConexao();
-
-        try {
-            //STEP 4: Execute a query
-            System.out.println("Creating statement...");
-            Statement stmt = conn.createStatement();
-
-            String sql = ("DELETE  FROM funcionario"
-                    + " WHERE id = " + idFuncionario);
-
-            stmt.executeUpdate(sql);
-
-            //STEP 6: Clean-up environment
-            stmt.close();
-            novaConexao.fecharConexao(conn);
-        } catch (SQLException se) {
-            //Handle errors for JDBC
-            se.printStackTrace();
-
-        } catch (Exception e) {
-            //Handle errors for Class.forName
-            e.printStackTrace();
-        } finally {
-            //finally block used to close resources
-            if (conn != null) {
-                novaConexao.fecharConexao(conn);
-            } //end finally try
-        }//end try
-        System.out.println("Goodbye!");
 
     }
 
-    public void gerarFolhaPagamento() throws ClassNotFoundException {
+    public void gerarFolhaPagamento() throws ClassNotFoundException, SQLException, IOException {
 
-        System.out.println("GERANDO FOLHA DE PAGAMENTO DE TODOS OS FUNCIONÁRIOS !!!");
-        Connection conn = this.novaConexao.criaConexao();
+        //Não estou conseguindo instanciar a conexão como campo da classe 
+        //por conta de tratamento da exceção IOException
+        FabricaConexao novaConexao = new FabricaConexao(bancoUtilizado);
+        SqlMapClient smc = novaConexao.getSmc();
 
-        try {
-            //STEP 4: Execute a query
-            System.out.println("Creating statement...");
-            Statement stmt = conn.createStatement();
-            String sql;
-            sql = ("SELECT * FROM funcionario;");
+        List<Funcionario> lista = (List<Funcionario>) smc.queryForList("Funcionario.getAll", null);
 
-            ResultSet rs = stmt.executeQuery(sql);
+        System.out.println("*************** FIM DA FOLHA DE PAGAMENTO FUNCIONÁRIOS ***************************");
 
-            //STEP 5: Extract data from result set
-            System.out.println("***************FOLHA DE PAGAMENTO FUNCIONÁRIOS ***************************");
-            while (rs.next()) {
-                //Retrieve by column name
-                funcionario.setId(rs.getInt("id"));
-                funcionario.setNome(rs.getString("nome"));
-                funcionario.setCargo(rs.getString("cargo"));
-                funcionario.setNumeroDependentes(rs.getInt("numeroDependentes"));
-                funcionario.setSalario(rs.getFloat("salario"));
+        for (Funcionario funcionario : lista) {
 
-                //Display values
-                System.out.println("ID DO FUNCIONARIO: " + funcionario.getId());
-                System.out.println(", NOME: " + funcionario.getNome());
-                System.out.println(", CARGO: " + funcionario.getCargo());
-                System.out.println(", NÚMERO DE DEPENDENTES: " + funcionario.getNumeroDependentes());
-                System.out.println(", SALÁRIO BRUTO: R$" + funcionario.getSalario());
-                System.out.println(", SALÁRIO COM DESCONTO DO INSS: R$"
-                        + funcionario.getSalarioComDescontoINSS() + "\n\n");
+            System.out.print("  " + funcionario.getId());
+            System.out.print("  " + funcionario.getNome());
+            System.out.print("  " + funcionario.getCargo());
+            System.out.print("  " + funcionario.getNumeroDependentes());
+            System.out.print("  " + funcionario.getSalario());
 
-            }
-            System.out.println("*************** FIM DA FOLHA DE PAGAMENTO FUNCIONÁRIOS ***************************");
-            //STEP 6: Clean-up environment
-            rs.close();
-            stmt.close();
-            novaConexao.fecharConexao(conn);
-        } catch (SQLException se) {
-            //Handle errors for JDBC
-            se.printStackTrace();
-        } catch (Exception e) {
-            //Handle errors for Class.forName
-            e.printStackTrace();
-        } finally {
-            //finally block used to close resources
-            if (conn != null) {
-                novaConexao.fecharConexao(conn);
-            } //end finally try
-        }//end try
-        System.out.println("Goodbye!");
+            //Display values
+            System.out.println("ID DO FUNCIONARIO: " + funcionario.getId());
+            System.out.println(", NOME: " + funcionario.getNome());
+            System.out.println(", CARGO: " + funcionario.getCargo());
+            System.out.println(", NÚMERO DE DEPENDENTES: " + funcionario.getNumeroDependentes());
+            System.out.println(", SALÁRIO BRUTO: R$" + funcionario.getSalario());
+            System.out.println(", SALÁRIO COM DESCONTO DO INSS: R$"
+                    + funcionario.getSalarioComDescontoINSS() + "\n\n");
 
-    }
-
-    public void criaBanco() throws ClassNotFoundException {
-
-        if (this.novaConexao.getBancoDadosEscolhido() == "MySQL") {
-
-            criarBancoMySql();
-
-        } else if (this.novaConexao.getBancoDadosEscolhido() == "PostgreSQL") {
-
-            criarBancoPostgreSQL();
         }
+        System.out.println("*************** FIM DA FOLHA DE PAGAMENTO FUNCIONÁRIOS ***************************");
 
     }
 
-    void criarBancoMySql() throws ClassNotFoundException {
+    //AINDA NÃO SEI COMO CRIAR TABELA
+    void criarTabelaMySQL() throws ClassNotFoundException, IOException {
 
-        System.out.println("CRIANDO BANCO empresa no MySQL!!!");
-        Connection conn = novaConexao.criaConexao();
-
-        try {
-            //STEP 4: Execute a query
-            System.out.println("Creating statement...");
-            this.novaConexao.setURL("jdbc:mysql://localhost:3306/");
-            Statement stmt = conn.createStatement();
-            String sql;
-            sql = this.leitorArquivos.lerArquivoConsulta("criarBancoMySQL");
-            stmt.executeUpdate(sql);
-            String warning = stmt.getWarnings().getMessage();
-            System.out.println("***************BANCO CRIADO COM SUCESSO ***************************");
-            System.out.println("CONSEGUI PEGAR O WARNING DO BANCO : " + warning);
-            stmt.close();
-            novaConexao.fecharConexao(conn);
-            this.novaConexao = new FabricaConexao("MySQL");
-        } catch (SQLException se) {
-            //Handle errors for JDBC
-            se.printStackTrace();
-        } catch (Exception e) {
-            //Handle errors for Class.forName
-            e.printStackTrace();
-        } finally {
-            //finally block used to close resources
-            if (conn != null) {
-                novaConexao.fecharConexao(conn);
-            } //end finally try
-        }//end try
-        System.out.println("Goodbye!");
-
-    }
-
-    void criarTabelaMySQL() throws ClassNotFoundException {
+        FabricaConexao novaConexao = new FabricaConexao(bancoUtilizado);
+        SqlMapClient smc = novaConexao.getSmc();
 
         System.out.println("CRIANDO TABELA funcionario !!!");
-        Connection conn = novaConexao.criaConexao();
+       
         try {
             //STEP 4: Execute a query
             System.out.println("Creating statement...");
@@ -357,8 +167,12 @@ public class Operacoes_Banco {
 
     }
 
-    public void criarFuncao() throws ClassNotFoundException, SQLException {
+    public void criarFuncao() throws ClassNotFoundException, SQLException, IOException {
 
+        FabricaConexao novaConexao = new FabricaConexao(bancoUtilizado);
+        SqlMapClient smc = novaConexao.getSmc();
+
+        
         if (novaConexao.getBancoDadosEscolhido() == "MySQL") {
             criaFuncaoTesteMYSQL();
         } else {
@@ -369,8 +183,8 @@ public class Operacoes_Banco {
 
     void criaFuncaoTesteMYSQL() throws ClassNotFoundException, SQLException {
 
-        System.out.println("CRIANDO FUNÇÃO hello !!!");
-        Connection conn = novaConexao.criaConexao();
+        FabricaConexao novaConexao = new FabricaConexao(bancoUtilizado);
+        SqlMapClient smc = novaConexao.getSmc();
 
         try {
             //STEP 4: Execute a query
@@ -405,13 +219,16 @@ public class Operacoes_Banco {
 
     }
 
-    public void chamandoFuncao(String pessoaPesquisada) throws ClassNotFoundException, SQLException {
+    public void chamandoFuncao(String pessoaPesquisada) throws ClassNotFoundException, SQLException, IOException {
 
-        if (this.novaConexao.getBancoDadosEscolhido() == "MySQL") {
+        FabricaConexao novaConexao = new FabricaConexao(bancoUtilizado);
+        SqlMapClient smc = novaConexao.getSmc();
+
+        if (novaConexao.getBancoDadosEscolhido() == "MySQL") {
 
             chamandoFuncaoMySql(pessoaPesquisada);
 
-        } else if (this.novaConexao.getBancoDadosEscolhido() == "PostgreSQL") {
+        } else if (novaConexao.getBancoDadosEscolhido() == "PostgreSQL") {
 
             chamandoFuncaoPostgreSQL(pessoaPesquisada);
 
@@ -421,7 +238,9 @@ public class Operacoes_Banco {
 
     public void chamandoFuncaoMySql(String pessoaPesquisada) throws ClassNotFoundException, SQLException {
 
-        
+        FabricaConexao novaConexao = new FabricaConexao(bancoUtilizado);
+        SqlMapClient smc = novaConexao.getSmc();
+
         System.out.println("CHAMANDO FUNÇÃO PARA A SEGUINTE PESSOA PESQUISADA:"
                 + " " + pessoaPesquisada + " ! ");
 
